@@ -7,10 +7,21 @@ from tqdm import tqdm
 import re
 
 
+ann_dir = r'D:\VMRD_dataset\Annotations'
+ann_ids = r'D:\VMRD_dataset\ImageSets\Main\all.txt'
+labels = r'.\labels.txt'
+
+# def get_label2id(labels_path: str) -> Dict[str, int]:
+#     """id is 1 start"""
+#     with open(labels_path, 'r') as f:
+#         labels_str = f.read().split()
+#     labels_ids = list(range(1, len(labels_str)+1))
+#     return dict(zip(labels_str, labels_ids))
+
 def get_label2id(labels_path: str) -> Dict[str, int]:
     """id is 1 start"""
     with open(labels_path, 'r') as f:
-        labels_str = f.read().split()
+        labels_str = f.read().strip().split('\n')
     labels_ids = list(range(1, len(labels_str)+1))
     return dict(zip(labels_str, labels_ids))
 
@@ -59,6 +70,10 @@ def get_image_info(annotation_root, extract_num_from_imgid=True):
 
 def get_coco_annotation_from_obj(obj, label2id):
     label = obj.findtext('name')
+
+    if label == "remote controller":
+        pass
+
     assert label in label2id, f"Error: {label} is not in label2id !"
     category_id = label2id[label]
     bndbox = obj.find('bndbox')
@@ -93,6 +108,7 @@ def convert_xmls_to_cocojson(annotation_paths: List[str],
     bnd_id = 1  # START_BOUNDING_BOX_ID, TODO input as args ?
     print('Start converting !')
     for a_path in tqdm(annotation_paths):
+        a_path = a_path + '.xml'
         # Read annotation xml
         ann_tree = ET.parse(a_path)
         ann_root = ann_tree.getroot()
@@ -120,13 +136,13 @@ def convert_xmls_to_cocojson(annotation_paths: List[str],
 def main():
     parser = argparse.ArgumentParser(
         description='This script support converting voc format xmls to coco format json')
-    parser.add_argument('--ann_dir', type=str, default=None,
+    parser.add_argument('--ann_dir', type=str, default=ann_dir,
                         help='path to annotation files directory. It is not need when use --ann_paths_list')
-    parser.add_argument('--ann_ids', type=str, default=None,
+    parser.add_argument('--ann_ids', type=str, default=ann_ids,
                         help='path to annotation files ids list. It is not need when use --ann_paths_list')
     parser.add_argument('--ann_paths_list', type=str, default=None,
                         help='path of annotation paths list. It is not need when use --ann_dir and --ann_ids')
-    parser.add_argument('--labels', type=str, default=None,
+    parser.add_argument('--labels', type=str, default=labels,
                         help='path to label list.')
     parser.add_argument('--output', type=str, default='output.json', help='path to output json file')
     parser.add_argument('--ext', type=str, default='', help='additional extension of annotation file')
